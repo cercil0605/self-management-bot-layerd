@@ -1,22 +1,26 @@
 package handler
 
 import (
-    "fmt"
-    "strings"
-
-    "github.com/bwmarrin/discordgo"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"self-management-bot/service"
+	"strings"
 )
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-    if m.Author.ID == s.State.User.ID {
-        return
-    }
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
 
-    content := strings.TrimSpace(m.Content)
+	content := strings.TrimSpace(m.Content)
 
-    if strings.HasPrefix(content, "!add ") {
-        taskTitle := strings.TrimPrefix(content, "!add ")
-        fmt.Println("タスク登録:", taskTitle)
-        s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("✅ タスク '%s' を登録しました！", taskTitle))
-    }
+	if strings.HasPrefix(content, "!add ") {
+		title := strings.TrimPrefix(content, "!add ")
+		err := service.AddTask(m.Author.ID, title)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"❌ タスク登録失敗")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@"+m.Author.ID+">\n "+"✅ タスク追加: %s", title))
+	}
 }
