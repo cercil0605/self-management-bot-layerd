@@ -16,7 +16,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(content, "!add ") {
 		title := strings.TrimPrefix(content, "!add ")
-		err := service.AddTask(m.Author.ID, title)
+		err := service.AddTaskService(m.Author.ID, title)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"❌ タスク登録失敗")
 			return
