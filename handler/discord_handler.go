@@ -24,6 +24,8 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleComplete(s, m, content)
 	case strings.HasPrefix(content, "!delete"):
 		HandleDelete(s, m, content)
+	case strings.HasPrefix(content, "!chat"):
+		HandleChat(s, m, content)
 	}
 }
 
@@ -60,6 +62,7 @@ func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg.WriteString("```")
 	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n"+msg.String())
 }
+
 func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
 	arg := strings.TrimPrefix(content, "!done ")
 	DoneTaskNumber, err := strconv.Atoi(arg)
@@ -91,6 +94,7 @@ func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content st
 	}
 	s.ChannelMessageSend(m.ChannelID, msg.String())
 }
+
 func HandleDelete(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
 	arg := strings.TrimPrefix(content, "!delete ")
 	DeleteNumber, err := strconv.Atoi(arg)
@@ -105,4 +109,19 @@ func HandleDelete(s *discordgo.Session, m *discordgo.MessageCreate, content stri
 		return
 	}
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```⭕️ タスク削除しました```", m.Author.ID))
+}
+
+func HandleChat(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
+	arg := strings.TrimPrefix(content, "!chat ")
+	if len(strings.TrimSpace(arg)) == 0 {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```❌ メッセージを入力してください```", m.Author.ID))
+		return
+	}
+	s.ChannelTyping(m.ChannelID) // 入力中表示
+	reply, err := service.ChatWithContext(m.Author.ID, content)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```%s```", m.Author.ID, err.Error()))
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n%s\n", m.Author.ID, reply))
 }

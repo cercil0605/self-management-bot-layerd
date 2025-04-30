@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
@@ -30,13 +31,16 @@ func StopLLM() error {
 }
 
 // Response from LLM
-func getLLMResponse(prompt string) (string, error) {
+func GetLLMResponse(prompt string) (string, error) {
 	req := LLMRequest{
 		Model:  "Llama-3-ELYZA-JP",
 		Prompt: prompt,
 		Stream: false,
 	}
 	body, _ := json.Marshal(req)
+	// debug prompt
+	fmt.Println("送信プロンプト:", prompt)
+
 	resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return "", err

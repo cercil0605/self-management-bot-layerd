@@ -38,3 +38,11 @@ func DeleteTask(taskID int) error {
 	_, err := db.DB.Exec(query, taskID)
 	return err
 }
+func FindCompletedTaskByUser(userID string) ([]Task, error) {
+	query := `SELECT id,title,status FROM tasks 
+                       WHERE user_id = $1 AND status = 'completed' 
+                       ORDER BY created_at `
+	var tasks []Task
+	err := db.DB.Select(&tasks, query, userID)
+	return tasks, err
+}
