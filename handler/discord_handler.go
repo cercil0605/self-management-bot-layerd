@@ -54,11 +54,7 @@ func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg.WriteString("今日のTodoです！\n")
 	msg.WriteString("```")
 	for i, task := range tasks {
-		status := "⌛️"
-		if task.Status == "Completed" {
-			status = "✅"
-		}
-		msg.WriteString(fmt.Sprintf("%s [%02d] %s\n", status, i, task.Title))
+		msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
 	}
 	msg.WriteString("```")
 	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n"+msg.String())
@@ -75,5 +71,22 @@ func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content st
 		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ "+err.Error()+"```")
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```✅ タスク完了！お疲れ様です！```")
+	// 完了 + 残タスク表示
+	tasks, err := service.GetTaskService(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n✅ タスク完了！\n⚠️ 残りのタスク取得に失敗しました", m.Author.ID))
+		return
+	}
+	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("<@%s>\n```✅ タスク完了！お疲れ様です！\n", m.Author.ID))
+	if len(tasks) == 0 {
+		msg.WriteString("\n🎉 もう残ってるタスクはありません！今日もよく頑張った！```")
+	} else {
+		msg.WriteString("\n📝 残りのタスク:\n")
+		for i, task := range tasks {
+			msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
+		}
+		msg.WriteString("```")
+	}
+	s.ChannelMessageSend(m.ChannelID, msg.String())
 }
