@@ -22,12 +22,13 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleList(s, m)
 	case strings.HasPrefix(content, "!done "):
 		HandleComplete(s, m, content)
+	case strings.HasPrefix(content, "!delete"):
+		HandleDelete(s, m, content)
 	}
 }
 
 func HandleAdd(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
 	title := strings.TrimPrefix(content, "!add ")
-	// validation 今後別モジュールで実装する必要がありそう
 	if len(title) == 0 {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```⚠️ タスク内容を追加してください```", m.Author.ID))
 		return
@@ -89,4 +90,19 @@ func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content st
 		msg.WriteString("```")
 	}
 	s.ChannelMessageSend(m.ChannelID, msg.String())
+}
+func HandleDelete(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
+	arg := strings.TrimPrefix(content, "!delete ")
+	DeleteNumber, err := strconv.Atoi(arg)
+	// 入力バリデーション
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ 数字を指定してください```")
+		return
+	}
+	err = service.DeleteTaskService(m.Author.ID, DeleteNumber)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ "+err.Error()+"```")
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```⭕️ タスク削除しました```", m.Author.ID))
 }

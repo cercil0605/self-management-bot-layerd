@@ -33,3 +33,8 @@ func CompleteTask(taskID int) error {
 	_, err := db.DB.Exec(query, taskID)
 	return err
 }
+func DeleteTask(taskID int) error {
+	query := `DELETE FROM tasks WHERE id = $1`
+	_, err := db.DB.Exec(query, taskID)
+	return err
+}
