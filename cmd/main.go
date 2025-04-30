@@ -5,6 +5,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"self-management-bot/client"
 	"self-management-bot/db"
 	"self-management-bot/handler"
 )
@@ -33,6 +34,13 @@ func main() {
 		log.Fatal("❌ Error opening connection,", err)
 	}
 	defer dg.Close()
+
+	// boot LLM
+	err = client.StartLLM()
+	if err != nil {
+		log.Fatal("❌ Error opening connection,", err)
+	}
+	defer client.StopLLM()
 
 	log.Println("✅ Bot is now running. Press CTRL+C to exit.")
 	select {}
