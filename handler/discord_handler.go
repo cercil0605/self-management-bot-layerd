@@ -20,6 +20,8 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleAdd(s, m, content)
 	case strings.HasPrefix(content, "!list"):
 		HandleList(s, m)
+	case strings.HasPrefix(content, "!done "):
+		HandleComplete(s, m, content)
 	}
 }
 
@@ -35,17 +37,17 @@ func HandleAdd(s *discordgo.Session, m *discordgo.MessageCreate, content string)
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```❌ タスク登録失敗```", m.Author.ID))
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```✅ タスク追加: %s```", m.Author.ID, title))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```⭕️ タスク追加: %s```", m.Author.ID, title))
 }
 
 func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	tasks, err := service.GetTaskService(m.Author.ID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"❌ タスク取得失敗")
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ タスク取得失敗```")
 		return
 	}
 	if len(tasks) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"📭 タスクが登録されていません")
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```📭 タスクが登録されていません```")
 		return
 	}
 	var msg strings.Builder
@@ -62,17 +64,16 @@ func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n"+msg.String())
 }
 func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
-	var DoneTaskNumber int
-	DoneTaskNumber, _ = strconv.Atoi(strings.TrimPrefix(content, "!done "))
-	tasks, err := service.GetTaskService(m.Author.ID)
+	arg := strings.TrimPrefix(content, "!done ")
+	DoneTaskNumber, err := strconv.Atoi(arg)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"❌ タスク取得失敗")
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ 数字を指定してください```")
 		return
 	}
-	if len(tasks) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n "+"📭 タスクが登録されていません")
+	err = service.CompleteTaskService(m.Author.ID, DoneTaskNumber)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```❌ "+err.Error()+"```")
 		return
 	}
-	DoneTaskID := tasks[DoneTaskNumber].ID
-	// 関数追加
+	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+">\n```✅ タスク完了！お疲れ様です！```")
 }

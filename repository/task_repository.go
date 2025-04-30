@@ -21,8 +21,15 @@ func AddTask(userID, title string) error {
 	return err
 }
 func FindTaskByUserID(userID string) ([]Task, error) {
-	query := `SELECT id,title,status FROM tasks WHERE user_id = $1 ORDER BY created_at`
+	query := `SELECT id,title,status FROM tasks 
+                       WHERE user_id = $1 AND status = 'pending' 
+                       ORDER BY created_at `
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
+}
+func CompleteTask(taskID int) error {
+	query := `UPDATE tasks SET status = 'completed' WHERE id = $1`
+	_, err := db.DB.Exec(query, taskID)
+	return err
 }
