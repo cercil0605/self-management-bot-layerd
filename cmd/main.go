@@ -31,7 +31,6 @@ func main() {
 	if err != nil {
 		log.Fatal("❌ Error creating Discord session,", err)
 	}
-
 	dg.AddHandler(handler.MessageCreate)
 
 	err = dg.Open()
@@ -39,7 +38,8 @@ func main() {
 		log.Fatal("❌ Error opening Discord connection,", err)
 	}
 	defer dg.Close()
-
+	// パッチ処理開始
+	handler.StartResetConfirmCleaner()
 	// boot LLM
 	err = client.StartLLM()
 	if err != nil {

@@ -6,7 +6,10 @@ import (
 	"self-management-bot/service"
 	"strconv"
 	"strings"
+	"time"
 )
+
+var resetAllConfirm = make(map[string]time.Time)
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
@@ -26,6 +29,10 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleDelete(s, m, content)
 	case strings.HasPrefix(content, "!chat"):
 		HandleChat(s, m, content)
+	case strings.HasPrefix(content, "!reset"):
+		HandleReset(s, m)
+	case strings.HasPrefix(content, "!confirm reset"):
+		HandleConfirm(s, m)
 	}
 }
 
@@ -124,4 +131,40 @@ func HandleChat(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		return
 	}
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n%s\n", m.Author.ID, reply))
+}
+
+func HandleReset(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if strings.HasPrefix(m.Content, "!reset all") {
+		resetAllConfirm[m.Author.ID] = time.Now().Add(10 * time.Minute) // 10分先まで有効
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(
+			"<@%s>\n```⚠️ 本当に全タスク（過去含む）を削除しますか？\n削除するには '!confirm reset' と入力してください。```",
+			m.Author.ID,
+		))
+		return
+	}
+	// !reset（今日のみ削除）
+	count, err := service.ResetTodayTasks(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```❌ 今日のリセット失敗: %s```", m.Author.ID, err.Error()))
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```✅ 今日のタスクを %d 件削除しました```", m.Author.ID, count))
+}
+func HandleConfirm(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// 期限切れのリセットリクエストか確認
+	expiry, ok := resetAllConfirm[m.Author.ID]
+	if !ok || time.Now().After(expiry) {
+		delete(resetAllConfirm, m.Author.ID)
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```⚠️ '!reset all' の確認時間が切れました。再度実行してください。```", m.Author.ID))
+		return
+	}
+	// 全てのタスクを削除
+	count, err := service.ResetAllTasks(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```❌ 全削除に失敗しました: %s```", m.Author.ID, err.Error()))
+		return
+	}
+	// 削除要求リストから削除
+	delete(resetAllConfirm, m.Author.ID)
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s>\n```✅ 全タスクを %d 件削除しました```", m.Author.ID, count))
 }

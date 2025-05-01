@@ -86,3 +86,9 @@ func CreateChatPrompt(pending []repository.Task, completed []repository.Task, in
 	prompt.WriteString("\n上記を踏まえてアドバイスせよ．")
 	return prompt.String()
 }
+func ResetTodayTasks(userID string) (int, error) {
+	return repository.DeleteTodayTasks(userID)
+}
+func ResetAllTasks(userID string) (int, error) {
+	return repository.DeleteAllTasksByUser(userID)
+}
