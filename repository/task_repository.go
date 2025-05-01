@@ -38,3 +38,32 @@ func DeleteTask(taskID int) error {
 	_, err := db.DB.Exec(query, taskID)
 	return err
 }
+func FindCompletedTaskByUser(userID string) ([]Task, error) {
+	query := `SELECT id,title,status FROM tasks 
+                       WHERE user_id = $1 AND status = 'completed' 
+                       ORDER BY created_at `
+	var tasks []Task
+	err := db.DB.Select(&tasks, query, userID)
+	return tasks, err
+}
+func DeleteTodayTasks(userID string) (int, error) {
+	query := `
+		DELETE FROM tasks
+		WHERE user_id = $1 AND created_at::date = CURRENT_DATE
+	`
+	res, err := db.DB.Exec(query, userID)
+	if err != nil {
+		return 0, err
+	}
+	rows, _ := res.RowsAffected()
+	return int(rows), nil
+}
+func DeleteAllTasksByUser(userID string) (int, error) {
+	query := `DELETE FROM tasks WHERE user_id = $1`
+	res, err := db.DB.Exec(query, userID)
+	if err != nil {
+		return 0, err
+	}
+	rows, _ := res.RowsAffected()
+	return int(rows), nil
+}
