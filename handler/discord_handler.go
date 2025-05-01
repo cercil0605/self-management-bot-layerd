@@ -128,7 +128,10 @@ func HandleChat(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		replyToUser(s, m.ChannelID, m.Author.ID, "```❌ メッセージを入力してください```")
 		return
 	}
-	s.ChannelTyping(m.ChannelID)
+	err := s.ChannelTyping(m.ChannelID)
+	if err != nil {
+		return
+	}
 	reply, err := service.ChatWithContext(m.Author.ID, arg)
 	if err != nil {
 		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```❌ %s```", err.Error()))
