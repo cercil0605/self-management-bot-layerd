@@ -34,12 +34,14 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleComplete(s, m, content)
 	case strings.HasPrefix(content, "!delete"):
 		HandleDelete(s, m, content)
-	case strings.HasPrefix(content, "!chat"):
+	case strings.HasPrefix(content, "!chat "):
 		HandleChat(s, m, content)
 	case strings.HasPrefix(content, "!reset"):
 		HandleReset(s, m)
 	case strings.HasPrefix(content, "!confirm reset"):
 		HandleConfirm(s, m)
+	case strings.HasPrefix(content, "!edit "):
+		HandleEdit(s, m, content)
 	}
 }
 
@@ -180,7 +182,27 @@ func HandleConfirm(s *discordgo.Session, m *discordgo.MessageCreate) {
 		replyToUser(s, m.ChannelID, userID, fmt.Sprintf("```❌ 全削除に失敗しました: %s```", err.Error()))
 		return
 	}
-
 	delete(resetAllConfirm, userID)
 	replyToUser(s, m.ChannelID, userID, fmt.Sprintf("```✅ 全タスクを %d 件削除しました```", count))
+}
+
+func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
+	arg := strings.TrimPrefix(content, "!edit ")
+	fields := strings.Fields(arg)
+	if len(fields) < 2 {
+		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⚠️ コマンドの形式が正しくありません。\n例: `!edit 1 新しい内容` ```"))
+		return
+	}
+	IndexNumber, err := strconv.Atoi(fields[0])
+	if err != nil {
+		replyToUser(s, m.ChannelID, m.Author.ID, "```❌ 数字を指定してください```")
+		return
+	}
+	newTitle := fields[1]
+	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle)
+	if err != nil {
+		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```❌ タスクの編集に失敗しました: %s```", err.Error()))
+		return
+	}
+	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```✅ 指定されたToDoを編集しました```"))
 }

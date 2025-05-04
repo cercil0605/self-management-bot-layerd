@@ -34,6 +34,11 @@ func FindTaskByUserID(userID string) ([]Task, error) {
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
 }
+func UpdateTask(taskID int, title string) error {
+	query := `UPDATE tasks SET title = $1 WHERE id = $2`
+	_, err := db.DB.Exec(query, title, taskID)
+	return err
+}
 func CompleteTask(taskID int) error {
 	query := `UPDATE tasks SET status = 'completed' WHERE id = $1`
 	_, err := db.DB.Exec(query, taskID)
@@ -64,6 +69,7 @@ func FindPendingTodayTaskByUser(userID string) ([]Task, error) {
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
 }
+
 func DeleteTodayTasks(userID string) (int, error) {
 	query := `
 		DELETE FROM tasks
@@ -76,6 +82,7 @@ func DeleteTodayTasks(userID string) (int, error) {
 	rows, _ := res.RowsAffected()
 	return int(rows), nil
 }
+
 func DeleteAllTasksByUser(userID string) (int, error) {
 	query := `DELETE FROM tasks WHERE user_id = $1`
 	res, err := db.DB.Exec(query, userID)

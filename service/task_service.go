@@ -13,6 +13,17 @@ func AddTaskService(userID, title string) error {
 func GetTaskService(userID string) ([]repository.Task, error) {
 	return repository.FindTaskByUserID(userID)
 }
+func UpdateTaskService(userID string, TaskNumber int, title string) error {
+	tasks, err := GetTaskService(userID)
+	// 内部エラー
+	if err != nil {
+		return fmt.Errorf("タスク取得に失敗: %w", err)
+	}
+	if len(tasks) == 0 {
+		return fmt.Errorf("タスクが1件も登録されていません")
+	}
+	return repository.UpdateTask(tasks[TaskNumber].ID, title)
+}
 func CompleteTaskService(userID string, DoneTaskNumber int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
