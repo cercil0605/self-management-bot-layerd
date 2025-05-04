@@ -70,7 +70,11 @@ func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	var msg strings.Builder
 	msg.WriteString("今日のTodoです！\n```")
 	for i, task := range tasks {
-		msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
+		if task.Status == "pending" { //Pending
+			msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
+		} else if task.Status == "completed" {
+			msg.WriteString(fmt.Sprintf("✅ [%02d] %s\n", i, task.Title))
+		}
 	}
 	msg.WriteString("```")
 	replyToUser(s, m.ChannelID, m.Author.ID, msg.String())
@@ -93,16 +97,23 @@ func HandleComplete(s *discordgo.Session, m *discordgo.MessageCreate, content st
 		replyToUser(s, m.ChannelID, m.Author.ID, "```✅ タスク完了！\n⚠️ 残りのタスク取得に失敗しました```")
 		return
 	}
+	// 内容出力
 	var msg strings.Builder
 	msg.WriteString("```✅ タスク完了！お疲れ様です！\n")
-	if len(tasks) == 0 {
-		msg.WriteString("\n🎉 もう残ってるタスクはありません！今日もよく頑張った！```")
-	} else {
-		msg.WriteString("\n📝 残りのタスク:\n")
-		for i, task := range tasks {
+	hasPending := false
+	for i, task := range tasks {
+		if task.Status == "pending" {
+			if !hasPending {
+				msg.WriteString("\n📝 残りのタスク:\n")
+				hasPending = true
+			}
 			msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
 		}
+	}
+	if hasPending {
 		msg.WriteString("```")
+	} else {
+		msg.WriteString("\n🎉 もう残ってるタスクはありません！今日もよく頑張った！```")
 	}
 	replyToUser(s, m.ChannelID, m.Author.ID, msg.String())
 }

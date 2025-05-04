@@ -45,12 +45,13 @@ func DeleteTaskService(userID string, DeleteTaskNumber int) error {
 	return repository.DeleteTask(tasks[DeleteTaskNumber].ID)
 }
 
+// ChatWithContext 今日のToDo状況について
 func ChatWithContext(userID, input string) (string, error) {
-	pending, err := repository.FindTaskByUserID(userID)
+	pending, err := repository.FindPendingTodayTaskByUser(userID)
 	if err != nil {
 		return "❌ ユーザーのタスク取得に失敗しました(Pending)", err
 	}
-	completed, err := repository.FindCompletedTaskByUser(userID)
+	completed, err := repository.FindCompletedTodayTaskByUser(userID)
 	if err != nil {
 		return "❌ ユーザーのタスク取得に失敗しました(Completed)", err
 	}
@@ -62,6 +63,7 @@ func ChatWithContext(userID, input string) (string, error) {
 	return res, nil
 }
 
+// CreateChatPrompt 今日の完了状況をプロンプト化する
 func CreateChatPrompt(pending []repository.Task, completed []repository.Task, input string) string {
 	var prompt strings.Builder
 	prompt.WriteString("あなたは，自己管理を支援するメンズコーチです．\n\n")

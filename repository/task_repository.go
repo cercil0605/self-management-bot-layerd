@@ -20,10 +20,16 @@ func AddTask(userID, title string) error {
 	}
 	return err
 }
+
+// FindTaskByUserID 完了状況問わず今日のタスクを表示
 func FindTaskByUserID(userID string) ([]Task, error) {
 	query := `SELECT id,title,status FROM tasks 
-                       WHERE user_id = $1 AND status = 'pending' 
-                       ORDER BY created_at `
+                       WHERE user_id = $1  AND created_at::date = CURRENT_DATE
+                       ORDER BY 
+                           CASE status
+                           WHEN 'pending' THEN 0
+                           WHEN 'completed' THEN 1
+					   END`
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
@@ -38,9 +44,21 @@ func DeleteTask(taskID int) error {
 	_, err := db.DB.Exec(query, taskID)
 	return err
 }
-func FindCompletedTaskByUser(userID string) ([]Task, error) {
+
+// FindCompletedTodayTaskByUser 今日の完了済みタスク
+func FindCompletedTodayTaskByUser(userID string) ([]Task, error) {
 	query := `SELECT id,title,status FROM tasks 
-                       WHERE user_id = $1 AND status = 'completed' 
+                       WHERE user_id = $1 AND status = 'completed' AND created_at::date = CURRENT_DATE
+                       ORDER BY created_at `
+	var tasks []Task
+	err := db.DB.Select(&tasks, query, userID)
+	return tasks, err
+}
+
+// FindPendingTodayTaskByUser 今日の待ちタスク
+func FindPendingTodayTaskByUser(userID string) ([]Task, error) {
+	query := `SELECT id,title,status FROM tasks 
+                       WHERE user_id = $1 AND status = 'pending' AND created_at::date = CURRENT_DATE
                        ORDER BY created_at `
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
