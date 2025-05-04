@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func AddTaskService(userID, title string) error {
-	return repository.AddTask(userID, title)
+func AddTaskService(userID, title string, priorityID int) error {
+	return repository.AddTask(userID, title, priorityID)
 }
 func GetTaskService(userID string) ([]repository.Task, error) {
 	return repository.FindTaskByUserID(userID)

@@ -6,15 +6,22 @@ import (
 )
 
 type Task struct {
-	ID     int    `db:"id"`
-	UserID string `db:"user_id"`
-	Title  string `db:"title"`
-	Status string `db:"status"`
+	ID         int    `db:"id"`
+	UserID     string `db:"user_id"`
+	Title      string `db:"title"`
+	PriorityID int    `db:"priority_id"`
+	Status     string `db:"status"`
 }
 
-func AddTask(userID, title string) error {
-	query := `INSERT INTO tasks (user_id, title, status) VALUES ($1, $2, 'pending')`
-	_, err := db.DB.Exec(query, userID, title)
+type Priority struct {
+	ID    int    `db:"id"`
+	Code  string `db:"code"`
+	Emoji string `db:"emoji"`
+}
+
+func AddTask(userID, title string, priorityID int) error {
+	query := `INSERT INTO tasks (user_id, title, priority_id,status) VALUES ($1, $2, $3,'pending')`
+	_, err := db.DB.Exec(query, userID, title, priorityID)
 	if err != nil {
 		fmt.Println("❌ AddTask error:", err)
 	}

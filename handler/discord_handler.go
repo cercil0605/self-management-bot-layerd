@@ -11,6 +11,14 @@ import (
 
 var resetAllConfirm = make(map[string]time.Time)
 
+// 優先度チェック（最後がP1〜P4なら切り離す）
+var priorityMap = map[string]int{
+	"P1": 1,
+	"P2": 2,
+	"P3": 3,
+	"P4": 4,
+}
+
 func replyToUser(s *discordgo.Session, chID, userID, message string) {
 	_, err := s.ChannelMessageSend(chID, fmt.Sprintf("<@%s>\n%s", userID, message))
 	if err != nil {
@@ -46,17 +54,25 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func HandleAdd(s *discordgo.Session, m *discordgo.MessageCreate, content string) {
-	title := strings.TrimPrefix(content, "!add ")
-	if len(title) == 0 {
+	args := strings.Fields(strings.TrimPrefix(content, "!add"))
+	if len(args) == 0 {
 		replyToUser(s, m.ChannelID, m.Author.ID, "```⚠️ タスク内容を追加してください```")
 		return
 	}
-	err := service.AddTaskService(m.Author.ID, title)
+	// 優先度を表す部分だけTrim
+	priorityID := 4 // default
+	priorityInput := strings.ToUpper(args[len(args)-1])
+	if pid, ok := priorityMap[priorityInput]; ok {
+		priorityID = pid
+		args = args[:len(args)-1]
+	}
+	title := strings.Join(args, " ")
+	err := service.AddTaskService(m.Author.ID, title, priorityID)
 	if err != nil {
 		replyToUser(s, m.ChannelID, m.Author.ID, "```❌ タスク登録失敗```")
 		return
 	}
-	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⭕️ タスク追加: %s```", title))
+	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⭕️ タスク追加: %s 優先度： %d```", title, priorityID))
 }
 
 func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
