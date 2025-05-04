@@ -45,7 +45,7 @@ func DeleteTaskService(userID string, DeleteTaskNumber int) error {
 	return repository.DeleteTask(tasks[DeleteTaskNumber].ID)
 }
 
-// ChatWithContext 今日のToDo状況について
+// ChatWithContext 今日のタスク状況について
 func ChatWithContext(userID, input string) (string, error) {
 	pending, err := repository.FindPendingTodayTaskByUser(userID)
 	if err != nil {
