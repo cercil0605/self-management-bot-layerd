@@ -30,13 +30,14 @@ func AddTask(userID, title string, priorityID int) error {
 
 // FindTaskByUserID 完了状況問わず今日のタスクを表示
 func FindTaskByUserID(userID string) ([]Task, error) {
-	query := `SELECT id,title,status FROM tasks 
+	query := `SELECT id,title,status,priority_id FROM tasks 
                        WHERE user_id = $1  AND created_at::date = CURRENT_DATE
                        ORDER BY 
                            CASE status
                            WHEN 'pending' THEN 0
                            WHEN 'completed' THEN 1
-					   END`
+					   END,
+					   priority_id ASC`
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err

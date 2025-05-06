@@ -11,12 +11,19 @@ import (
 
 var resetAllConfirm = make(map[string]time.Time)
 
-// 優先度チェック（最後がP1〜P4なら切り離す）
+// 優先度チェック
+// Todo これできれば絵文字にしたい
 var priorityMap = map[string]int{
 	"P1": 1,
 	"P2": 2,
 	"P3": 3,
 	"P4": 4,
+}
+var priorityEmoji = map[int]string{
+	1: "🔴", // P1
+	2: "🟡", // P2
+	3: "🟢", // P3
+	4: "🔵", // P4
 }
 
 func replyToUser(s *discordgo.Session, chID, userID, message string) {
@@ -72,7 +79,7 @@ func HandleAdd(s *discordgo.Session, m *discordgo.MessageCreate, content string)
 		replyToUser(s, m.ChannelID, m.Author.ID, "```❌ タスク登録失敗```")
 		return
 	}
-	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⭕️ タスク追加: %s 優先度： %d```", title, priorityID))
+	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⭕️ タスク追加: %s 優先度： %d (%s)```", title, priorityID, priorityEmoji[priorityID]))
 }
 
 func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -87,10 +94,18 @@ func HandleList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	var msg strings.Builder
 	msg.WriteString("今日のTodoです！\n```")
+	completedFlag := false
 	for i, task := range tasks {
-		if task.Status == "pending" { //Pending
-			msg.WriteString(fmt.Sprintf("⌛️ [%02d] %s\n", i, task.Title))
+		if task.Status == "pending" {
+			if i == 0 {
+				msg.WriteString(fmt.Sprintf("📝 未完了のタスク\n"))
+			}
+			msg.WriteString(fmt.Sprintf("%s ⌛️ [%02d] %s\n", priorityEmoji[task.PriorityID], i, task.Title))
 		} else if task.Status == "completed" {
+			if completedFlag == false {
+				msg.WriteString(fmt.Sprintf("\n✅ 完了済みのタスク\n"))
+				completedFlag = true
+			}
 			msg.WriteString(fmt.Sprintf("✅ [%02d] %s\n", i, task.Title))
 		}
 	}
