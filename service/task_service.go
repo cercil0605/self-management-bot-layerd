@@ -13,7 +13,7 @@ func AddTaskService(userID, title string, priorityID int) error {
 func GetTaskService(userID string) ([]repository.Task, error) {
 	return repository.FindTaskByUserID(userID)
 }
-func UpdateTaskService(userID string, TaskNumber int, title string, priorityID int) error {
+func UpdateTaskService(userID string, TaskNumber int, title string, priorityID *int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
 	if err != nil {

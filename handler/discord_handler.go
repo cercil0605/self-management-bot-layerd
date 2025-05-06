@@ -232,11 +232,12 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 	}
 	newTitle := fields[1]
 	// 優先度の値を設定
-	var newPriority int
-	if fields[2] == "" {
-		newPriority = 4 // default
+	var newPriority *int
+	if len(fields) < 3 || fields[2] == "" {
+		newPriority = nil
 	} else {
-		newPriority = priorityMap[fields[2]] // 代入
+		newPID := priorityMap[fields[2]]
+		newPriority = &newPID
 	}
 	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle, newPriority)
 	if err != nil {
