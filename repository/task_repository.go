@@ -42,9 +42,9 @@ func FindTaskByUserID(userID string) ([]Task, error) {
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
 }
-func UpdateTask(taskID int, title string) error {
-	query := `UPDATE tasks SET title = $1 WHERE id = $2`
-	_, err := db.DB.Exec(query, title, taskID)
+func UpdateTask(taskID int, title string, priorityID int) error {
+	query := `UPDATE tasks SET title = $1 , priority_id = $2 WHERE id = $3`
+	_, err := db.DB.Exec(query, title, priorityID, taskID)
 	return err
 }
 func CompleteTask(taskID int) error {

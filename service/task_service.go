@@ -13,7 +13,7 @@ func AddTaskService(userID, title string, priorityID int) error {
 func GetTaskService(userID string) ([]repository.Task, error) {
 	return repository.FindTaskByUserID(userID)
 }
-func UpdateTaskService(userID string, TaskNumber int, title string) error {
+func UpdateTaskService(userID string, TaskNumber int, title string, priorityID int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
 	if err != nil {
@@ -22,7 +22,7 @@ func UpdateTaskService(userID string, TaskNumber int, title string) error {
 	if len(tasks) == 0 {
 		return fmt.Errorf("タスクが1件も登録されていません")
 	}
-	return repository.UpdateTask(tasks[TaskNumber].ID, title)
+	return repository.UpdateTask(tasks[TaskNumber].ID, title, priorityID)
 }
 func CompleteTaskService(userID string, DoneTaskNumber int) error {
 	tasks, err := GetTaskService(userID)

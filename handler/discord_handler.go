@@ -231,7 +231,14 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		return
 	}
 	newTitle := fields[1]
-	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle)
+	// 優先度の値を設定
+	var newPriority int
+	if fields[2] == "" {
+		newPriority = 4 // default
+	} else {
+		newPriority = priorityMap[fields[2]] // 代入
+	}
+	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle, newPriority)
 	if err != nil {
 		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```❌ タスクの編集に失敗しました: %s```", err.Error()))
 		return
