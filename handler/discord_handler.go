@@ -12,7 +12,6 @@ import (
 var resetAllConfirm = make(map[string]time.Time)
 
 // 優先度チェック
-// Todo これできれば絵文字にしたい
 var priorityMap = map[string]int{
 	"P1": 1,
 	"P2": 2,
