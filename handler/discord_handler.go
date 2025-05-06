@@ -56,6 +56,8 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleConfirm(s, m)
 	case strings.HasPrefix(content, "!edit "):
 		HandleEdit(s, m, content)
+	case strings.HasPrefix(content, "!help"):
+		HandleHelp(s, m)
 	}
 }
 
@@ -235,4 +237,19 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		return
 	}
 	replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```✅ 指定されたToDoを編集しました```"))
+}
+
+func HandleHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
+	helpText := "# 入れてくれてありがとう！\n 💻 コマンド一覧だよ\n" + "```" +
+		"!add <タスク名> [P1~P4]    : タスクを追加（例: !add 宿題 P1）\n" +
+		"!list                      : 今日のタスクを一覧表示\n" +
+		"!done <番号>              : タスクを完了扱いに\n" +
+		"!delete <番号>           : タスクを削除\n" +
+		"!reset                    : 今日のタスクを全削除\n" +
+		"!reset all               : 全タスクを削除（確認付き）\n" +
+		"!confirm reset           : 全削除を確定\n" +
+		"!chat <メッセージ>        : AIと会話\n" +
+		"!help                     : このヘルプを表示\n" +
+		"```"
+	replyToUser(s, m.ChannelID, m.Author.ID, helpText)
 }
