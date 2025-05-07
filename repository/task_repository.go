@@ -45,13 +45,18 @@ func FindTaskByUserID(userID string) ([]Task, error) {
 func UpdateTask(taskID int, title string, priorityID *int) error {
 	var query string
 	var args []interface{}
-	// 優先度未入力
+	// 1 value
 	if priorityID == nil {
 		query = `UPDATE tasks SET title = $1 WHERE id = $2`
 		args = []interface{}{title, taskID}
-	} else {
-		query = `UPDATE tasks SET title = $1, priority_id = $2 WHERE id = $3`
-		args = []interface{}{title, *priorityID, taskID}
+	} else { // 2 value
+		if title == "" {
+			query = `UPDATE tasks SET priority_id = $1 WHERE id = $2`
+			args = []interface{}{*priorityID, taskID}
+		} else {
+			query = `UPDATE tasks SET title = $1, priority_id = $2 WHERE id = $3`
+			args = []interface{}{title, *priorityID, taskID}
+		}
 	}
 	_, err := db.DB.Exec(query, args...)
 	return err
