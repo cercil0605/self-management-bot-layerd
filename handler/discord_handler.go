@@ -230,15 +230,26 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		replyToUser(s, m.ChannelID, m.Author.ID, "```❌ 数字を指定してください```")
 		return
 	}
-	newTitle := fields[1]
-	// 優先度の値を設定
+	// validate input
+	params := fields[1:]
 	var newPriority *int
-	if len(fields) < 3 || fields[2] == "" {
-		newPriority = nil
-	} else {
-		newPID := priorityMap[fields[2]]
-		newPriority = &newPID
+	var newTitle string
+
+	if len(params) == 1 { // !edit <num> <title or priority>
+		if pid, ok := priorityMap[params[0]]; ok { // priority
+			newPriority = &pid
+			newTitle = ""
+		} else {
+			newTitle = params[0] // title
+			newPriority = nil
+		}
+	} else if len(params) == 2 { // !edit <num> <title> <priority>
+		if pid, ok := priorityMap[params[0]]; ok { // priority
+			newPriority = &pid
+			newTitle = params[1]
+		}
 	}
+
 	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle, newPriority)
 	if err != nil {
 		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```❌ タスクの編集に失敗しました: %s```", err.Error()))
@@ -248,16 +259,23 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 }
 
 func HandleHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
-	helpText := "# 入れてくれてありがとう！\n 💻 コマンド一覧だよ\n" + "```" +
-		"!add <タスク名> [P1~P4]    : タスクを追加（例: !add 宿題 P1）\n" +
-		"!list                      : 今日のタスクを一覧表示\n" +
-		"!done <番号>              : タスクを完了扱いに\n" +
-		"!delete <番号>           : タスクを削除\n" +
-		"!reset                    : 今日のタスクを全削除\n" +
-		"!reset all               : 全タスクを削除（確認付き）\n" +
-		"!confirm reset           : 全削除を確定\n" +
-		"!chat <メッセージ>        : AIと会話\n" +
-		"!help                     : このヘルプを表示\n" +
+	helpText := "**📋 Self-Management Bot コマンド一覧**\n" +
+		"以下のコマンドを使って、タスクの管理やAIとの対話ができます！\n\n" +
+		"```" +
+		"✅ タスク管理\n" +
+		"!add <タスク名> [P1~P4]        : タスクを追加（例: !add 宿題 P1）\n" +
+		"!list                         : 今日のタスクを一覧表示\n" +
+		"!done <番号>                  : 指定タスクを完了扱いに\n" +
+		"!edit <番号> <内容> [P1~P4]   : 内容や優先度を編集\n" +
+		"!delete <番号>                : 指定タスクを削除\n\n" +
+		"♻️ タスク全削除（慎重に）\n" +
+		"!reset                        : 今日のタスクを全削除\n" +
+		"!reset all                    : 全タスクを削除（確認付き）\n" +
+		"!confirm reset                : 全削除を確定\n\n" +
+		"🤖 AI機能\n" +
+		"!chat <メッセージ>            : AIと会話（モチベ維持や相談）\n\n" +
+		"❓ ヘルプ\n" +
+		"!help                         : このヘルプを再表示\n" +
 		"```"
 	replyToUser(s, m.ChannelID, m.Author.ID, helpText)
 }
