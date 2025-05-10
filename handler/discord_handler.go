@@ -247,6 +247,9 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 		if pid, ok := priorityMap[params[0]]; ok { // priority
 			newPriority = &pid
 			newTitle = params[1]
+		} else {
+			replyToUser(s, m.ChannelID, m.Author.ID, "```❌ 優先度の形式が正しくありません```")
+			return
 		}
 	}
 
