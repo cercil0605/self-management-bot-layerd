@@ -28,16 +28,26 @@ func AddTask(userID, title string, priorityID int) error {
 	return err
 }
 
-// FindTaskByUserID 完了状況問わず今日のタスクを表示
-func FindTaskByUserID(userID string) ([]Task, error) {
-	query := `SELECT id,title,status,priority_id FROM tasks 
-                       WHERE user_id = $1  AND created_at::date = CURRENT_DATE
-                       ORDER BY 
-                           CASE status
-                           WHEN 'pending' THEN 0
-                           WHEN 'completed' THEN 1
-					   END,
-					   priority_id ASC`
+// FindTaskByUserID 完了状況問わずタスクを出力
+func FindTaskByUserID(userID string, when string) ([]Task, error) {
+	baseQuery := `
+		SELECT id, title, status, priority_id FROM tasks
+		WHERE user_id = $1 %s
+		ORDER BY
+			CASE status
+				WHEN 'pending' THEN 0
+				WHEN 'completed' THEN 1
+			END,
+			priority_id ASC`
+	// edit SQL
+	var dateCondition string
+	if when == "today" {
+		dateCondition = "AND created_at::date = CURRENT_DATE"
+	} else {
+		dateCondition = ""
+	}
+	query := fmt.Sprintf(baseQuery, dateCondition)
+
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
@@ -90,6 +100,14 @@ func FindPendingTodayTaskByUser(userID string) ([]Task, error) {
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
 	return tasks, err
+}
+
+// FindAllUser ユーザIDを全て探す
+func FindAllUser() ([]string, error) {
+	query := `SELECT DISTINCT user_id FROM tasks`
+	var userIDs []string
+	err := db.DB.Select(&userIDs, query)
+	return userIDs, err
 }
 
 func DeleteTodayTasks(userID string) (int, error) {
