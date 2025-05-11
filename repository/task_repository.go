@@ -39,11 +39,13 @@ func FindTaskByUserID(userID string, when string) ([]Task, error) {
 				WHEN 'completed' THEN 1
 			END,
 			priority_id ASC`
-	// edit SQL
+	// 日付に応じてSQL文を変えて絞り込む
 	var dateCondition string
 	if when == "today" {
 		dateCondition = "AND created_at::date = CURRENT_DATE"
-	} else {
+	} else if when == "yesterday" {
+		dateCondition = "AND created_at >= CURRENT_DATE - INTERVAL '1 day' AND created_at < CURRENT_DATE"
+	} else { // すべてのデータ
 		dateCondition = ""
 	}
 	query := fmt.Sprintf(baseQuery, dateCondition)

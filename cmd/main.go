@@ -48,8 +48,9 @@ func main() {
 	log.Println("✅ Discord接続成功")
 
 	defer dg.Close()
-	// batch process
+	// パッチ処理
 	handler.StartResetConfirmCleaner()
+	handler.StartFixedReminderSender(dg)
 	// boot LLM
 	err = client.StartLLM()
 	if err != nil {
