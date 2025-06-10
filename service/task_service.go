@@ -22,6 +22,9 @@ func UpdateTaskService(userID string, TaskNumber int, title string, priorityID *
 	if len(tasks) == 0 {
 		return fmt.Errorf("タスクが1件も登録されていません")
 	}
+	if TaskNumber < 0 || TaskNumber >= len(tasks) {
+		return fmt.Errorf("指定されたタスク番号は存在しません")
+	}
 	return repository.UpdateTask(tasks[TaskNumber].ID, title, priorityID)
 }
 func CompleteTaskService(userID string, DoneTaskNumber int) error {
