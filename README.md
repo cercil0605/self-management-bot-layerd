@@ -4,7 +4,7 @@
 ⌛️ タスクの追加・完了・削除・一覧機能に加え、AIがあなたのメンタルコーチになります。  
 🧠 チャットを通じてモチベーション維持や振り返りをサポートします。
 
-⚠️ `!chat` コマンドは LLM API の実装が必要です。近日中にデプロイ予定。
+`!chat` コマンドでは LLM との対話が可能です。ローカルの ELYZA モデルまたは Google Gemini API のどちらかを利用できます。
 
 ---
 
@@ -23,7 +23,7 @@
 | `!edit <番号> <タイトル> <優先度>`       | タスクのタイトルを編集        |
 | `!done <番号>`                    | 指定した番号のタスクを完了      |
 | `!delete <番号>`                  | 指定した番号のタスクを削除      |
-| `!chat <内容>`                    | LLMとの会話（※API未実装）   |
+| `!chat <内容>`                    | LLMとの会話                 |
 | `!reset`                        | 当日分のタスクを全削除        |
 | `!reset all` → `!confirm reset` | 全タスクを完全に削除         |
 
@@ -34,5 +34,9 @@
 - **Language**: Go 1.20+
 - **Discord API**: [`discordgo`](https://github.com/bwmarrin/discordgo)
 - **Database**: PostgreSQL + [`sqlx`](https://github.com/jmoiron/sqlx)
-- **LLM API**:  [`Ollama`](https://github.com/ollama/ollama)
+- **LLM API**:  [`Ollama`](https://github.com/ollama/ollama) / [Google Gemini](https://ai.google.dev/)
 - **Infra**: Docker（PostgreSQL用）
+
+### 環境変数
+
+`LLM_PROVIDER` に `elyza` (デフォルト) または `gemini` を指定します。Gemini を使用する場合は `GEMINI_API_KEY` も設定してください。
