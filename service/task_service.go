@@ -73,7 +73,7 @@ func ChatWithContext(userID, input string) (string, error) {
 		return "❌ ユーザーのタスク取得に失敗しました(Completed)", err
 	}
 	prompt := CreateChatPrompt(pending, completed, input)
-	res, err := client.GetLLMResponse(prompt)
+	res, err := client.GetGeminiResponse(prompt)
 	if err != nil {
 		return "❌ 応答に失敗しました(LLM)", err
 	}
@@ -169,7 +169,7 @@ func FixedTimeReminder() ([]ReminderMessage, error) {
 		prompt.WriteString("▼未完了のタスク：\n（未完了のタスクはありません）\n")
 	}
 	prompt.WriteString("\nこの情報をふまえて、今日をポジティブに始めるためのメッセージを作成してください。\n")
-	res, err := client.GetLLMResponse(prompt.String())
+	res, err := client.GetGeminiResponse(prompt.String())
 	if err != nil {
 		fmt.Printf("❌ LLM応答失敗 userID=%s: %v\n", userInfo[0], err)
 		return nil, err
