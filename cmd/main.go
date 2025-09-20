@@ -3,26 +3,14 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"log"
-	"self-management-bot/client"
 	"self-management-bot/config"
 	"self-management-bot/db"
 	"self-management-bot/handler"
-	"time"
 )
 
 func main() {
 	config.LoadConfig()
 	token := config.Cfg.DiscordToken
-	// Docker PostgreSQL 起動
-	if client.IsDockerPostgresRunning() {
-		log.Println("✅ PostgreSQL は既に起動済み")
-	} else {
-		log.Println("🚀 PostgreSQL 起動開始")
-		if err := client.RunDockerSQL(); err != nil {
-			log.Fatal("❌ PostgreSQL 起動失敗:", err)
-		}
-		time.Sleep(2 * time.Second)
-	}
 	// Connect DB
 	if err := db.Init(); err != nil {
 		log.Fatal("❌ DB 初期化失敗:", err)
