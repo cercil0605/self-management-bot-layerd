@@ -1,5 +1,6 @@
 package service
 
+// タスク関連のCRUD処理
 import (
 	"fmt"
 	"self-management-bot/client"
@@ -10,8 +11,13 @@ import (
 func AddTaskService(userID, title string, priorityID int) error {
 	return repository.AddTask(userID, title, priorityID)
 }
+
+// GetTaskService 今日のタスクを取得
 func GetTaskService(userID string) ([]repository.Task, error) {
-	return repository.FindTaskByUserID(userID)
+	return repository.FindTaskByUserID(userID, "today")
+}
+func GetYesterdayTaskService(userID string) ([]repository.Task, error) {
+	return repository.FindTaskByUserID(userID, "yesterday")
 }
 func UpdateTaskService(userID string, TaskNumber int, title string, priorityID *int) error {
 	tasks, err := GetTaskService(userID)
@@ -107,4 +113,76 @@ func ResetTodayTasks(userID string) (int, error) {
 }
 func ResetAllTasks(userID string) (int, error) {
 	return repository.DeleteAllTasksByUser(userID)
+}
+
+type ReminderMessage struct {
+	Content string // LLMからのメッセージ
+	UserID  string // ユーザID
+}
+
+// FixedTimeReminder 定期リマインダ送信
+func FixedTimeReminder() ([]ReminderMessage, error) {
+	userInfo, err := repository.FindAllUser()
+	if err != nil {
+		fmt.Println("❌ ユーザ情報取得失敗:", err)
+		return nil, err
+	}
+	// TODO 登録したすべてのユーザに送信するようにする
+	tasks, err := GetYesterdayTaskService(userInfo[0])
+	if err != nil {
+		fmt.Printf("❌ タスク取得失敗 userID=%s: %v\n", userInfo[0], err)
+		return nil, err
+	}
+	var prompt strings.Builder
+	// プロンプト
+	prompt.WriteString("あなたは自己管理を支援するプロフェッショナルなコーチです。\n")
+	prompt.WriteString("昨日のタスクの実行状況をふまえ、今日を気持ちよくスタートできるように前向きで実用的なアドバイスを与えてください。\n")
+	prompt.WriteString("以下のルールに従ってください：\n")
+	prompt.WriteString("- 昨日の達成を簡潔に肯定的に振り返る（完了したタスクがあれば）\n")
+	prompt.WriteString("- 昨日未完了だったタスクがあれば、それをどう今日活かすか助言する\n")
+	prompt.WriteString("- アドバイスは1〜3個、シンプルかつ実行可能なものにする\n\n")
+
+	// 昨日のタスクの整理
+	prompt.WriteString("【昨日のタスク状況】\n")
+
+	hasCompleted := false
+	hasPending := false
+	// TODO Goに任せるんじゃなくてDB操作に任せたい（あとで）
+	for _, task := range tasks {
+		switch task.Status {
+		case "completed":
+			if !hasCompleted {
+				prompt.WriteString("▼完了したタスク：\n")
+				hasCompleted = true
+			}
+			prompt.WriteString("- " + task.Title + "\n")
+		case "pending":
+			if !hasPending {
+				prompt.WriteString("▼未完了のタスク：\n")
+				hasPending = true
+			}
+			prompt.WriteString("- " + task.Title + "\n")
+		}
+	}
+	// 何もタスクをこなしてない時
+	if !hasCompleted {
+		prompt.WriteString("▼完了したタスク：\n（完了したタスクはありません）\n")
+	}
+	if !hasPending {
+		prompt.WriteString("▼未完了のタスク：\n（未完了のタスクはありません）\n")
+	}
+	prompt.WriteString("\nこの情報をふまえて、今日をポジティブに始めるためのメッセージを作成してください。\n")
+	res, err := client.GetLLMResponse(prompt.String())
+	if err != nil {
+		fmt.Printf("❌ LLM応答失敗 userID=%s: %v\n", userInfo[0], err)
+		return nil, err
+	}
+
+	fmt.Println("✅ リマインド生成成功")
+
+	msg := ReminderMessage{
+		Content: res,
+		UserID:  userInfo[0],
+	}
+	return []ReminderMessage{msg}, nil
 }
