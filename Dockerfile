@@ -24,6 +24,7 @@ COPY --from=builder /app/main /app/main
 # golang-migrate のバイナリを取り込み
 COPY --from=migrator /usr/local/bin/migrate /usr/local/bin/migrate
 
+# migrationファイルをコピー
 COPY db/migrations /app/migrations
 
 COPY ./deploy/entrypoint.sh /app/entrypoint.sh
