@@ -4,7 +4,6 @@
 ⌛️ タスクの追加・完了・削除・一覧機能に加え、AIがあなたのメンタルコーチになります。  
 🧠 チャットを通じてモチベーション維持や振り返りをサポートします。
 
-⚠️ `!chat` コマンドは LLM API の実装が必要です。近日中にデプロイ予定。
 
 ---
 
@@ -34,5 +33,5 @@
 - **Language**: Go 1.20+
 - **Discord API**: [`discordgo`](https://github.com/bwmarrin/discordgo)
 - **Database**: PostgreSQL + [`sqlx`](https://github.com/jmoiron/sqlx)
-- **LLM API**:  [`Ollama`](https://github.com/ollama/ollama)
-- **Infra**: Docker（PostgreSQL用）
+- **LLM API**:  [`Gemini`](https://github.com/ollama/ollama)
+- **Infra**: Docker
