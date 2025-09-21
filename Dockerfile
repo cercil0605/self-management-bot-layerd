@@ -1,27 +1,35 @@
-# Stage 1: Build the Go application
+# ----- Stage 1: Build the Go application -----
 FROM golang:1.23-alpine AS builder
-
 WORKDIR /app
-
-# Copy go.mod and go.sum to download dependencies first
 COPY go.mod go.sum ./
 RUN go mod download
-
-# Copy the rest of the source code
 COPY . .
+# 静的リンク（Alpineで動かす前提）
+ENV CGO_ENABLED=0
+RUN GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -o /app/main ./cmd/main.go
 
-# Build the application
-# CGO_ENABLED=0 is important for creating a static binary that runs on alpine
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main ./cmd/main.go
+# ----- Stage 1.5: Bring migrate binary -----
+FROM migrate/migrate:v4.17.0 AS migrator
 
-# Stage 2: Create the final lightweight image
+# ----- Stage 2: Final runtime image -----
 FROM alpine:latest
-
 WORKDIR /app
 
-# Copy the built binary from the builder stage
-COPY --from=builder /app/main .
-COPY --from=builder /app/db ./db
+# ルートCAが必要（DB/TLSやGHCRアクセス時に便利）
+RUN apk add --no-cache ca-certificates tzdata bash curl postgresql-client
 
-# Command to run the application
-CMD ["./main"]
+# アプリ本体
+COPY --from=builder /app/main /app/main
+
+# golang-migrate のバイナリを取り込み
+COPY --from=migrator /usr/local/bin/migrate /usr/local/bin/migrate
+
+COPY db/migrations /app/migrations
+
+COPY ./deploy/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+ENV TZ=Asia/Tokyo
+EXPOSE 8080
+
+ENTRYPOINT ["/app/entrypoint.sh"]
