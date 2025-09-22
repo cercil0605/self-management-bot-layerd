@@ -1,22 +1,33 @@
 # ----- Stage 1: Build the Go application -----
-FROM golang:1.23-alpine AS builder
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-# 静的リンク（Alpineで動かす前提）
-ENV CGO_ENABLED=0
-RUN GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -o /app/main ./cmd/main.go
 
-# ----- Stage 1.5: Bring migrate binary -----
-FROM migrate/migrate:v4.17.0 AS migrator
+# 依存キャッシュを有効化
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+# ソース投入
+COPY . .
+
+# buildx が注入するターゲットOS/ARCHを利用（マルチアーキ対応）
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV CGO_ENABLED=0
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -a -installsuffix cgo \
+    -o /app/main ./cmd/main.go
+
+# ----- Stage 1.5: Bring migrate binary (arch-aware) -----
+FROM --platform=$TARGETPLATFORM migrate/migrate:v4.17.0 AS migrator
 
 # ----- Stage 2: Final runtime image -----
-FROM alpine:latest
+FROM --platform=$TARGETPLATFORM alpine:3.20
 WORKDIR /app
 
-# ルートCAが必要（DB/TLSやGHCRアクセス時に便利）
-RUN apk add --no-cache ca-certificates tzdata bash curl postgresql-client
+RUN apk add --no-cache tzdata bash curl postgresql-client
 
 # アプリ本体
 COPY --from=builder /app/main /app/main
@@ -27,6 +38,7 @@ COPY --from=migrator /usr/local/bin/migrate /usr/local/bin/migrate
 # migrationファイルをコピー
 COPY db/migrations /app/migrations
 
+# エントリポイント
 COPY ./deploy/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
