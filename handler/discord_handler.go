@@ -2,11 +2,12 @@ package handler
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"self-management-bot/service"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var resetAllConfirm = make(map[string]time.Time)
@@ -37,7 +38,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	content := strings.TrimSpace(m.Content)
+	content := strings.TrimSpace(m.ContentWithMentionsReplaced())
 
 	switch {
 	case strings.HasPrefix(content, "!add "):
