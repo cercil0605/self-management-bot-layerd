@@ -2,11 +2,12 @@ package handler
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"self-management-bot/service"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var resetAllConfirm = make(map[string]time.Time)
@@ -56,7 +57,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleConfirm(s, m)
 	case strings.HasPrefix(content, "!edit "):
 		HandleEdit(s, m, content)
-	case strings.HasPrefix(content, "!help"):
+	case strings.HasPrefix(content, "*help"):
 		HandleHelp(s, m)
 	}
 }
@@ -222,7 +223,7 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 	arg := strings.TrimPrefix(content, "!edit ")
 	fields := strings.Fields(arg)
 	if len(fields) < 2 {
-		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⚠️ コマンドの形式が正しくありません。\n例: `!edit 1 新しい内容` ```"))
+		replyToUser(s, m.ChannelID, m.Author.ID, fmt.Sprintf("```⚠️ コマンドの形式が正しくありません。\n例: `!edit 1 <title/優先度>` or `!edit 1 title 優先度` ```"))
 		return
 	}
 	IndexNumber, err := strconv.Atoi(fields[0])
@@ -235,22 +236,20 @@ func HandleEdit(s *discordgo.Session, m *discordgo.MessageCreate, content string
 	var newPriority *int
 	var newTitle string
 
-	if len(params) == 1 { // !edit <num> <title or priority>
-		if pid, ok := priorityMap[params[0]]; ok { // priority
-			newPriority = &pid
-			newTitle = ""
-		} else {
-			newTitle = params[0] // title
-			newPriority = nil
-		}
-	} else if len(params) == 2 { // !edit <num> <title> <priority>
-		if pid, ok := priorityMap[params[1]]; ok { // priority
-			newPriority = &pid
-			newTitle = params[0]
-		} else {
-			replyToUser(s, m.ChannelID, m.Author.ID, "```❌ 優先度の形式が正しくありません```")
-			return
-		}
+	if pid, ok := priorityMap[params[len(params)-1]]; ok {
+		// paramの末尾が優先度指定なら設定
+		newPriority = &pid
+	}
+
+	titleEnd := len(params)
+	if newPriority != nil {
+		// 優先度が指定されている場合はタイトルの終端を調整
+		titleEnd -= 1
+	}
+
+	if titleEnd > 0 {
+		// タイトルが存在する場合のみ設定
+		newTitle = strings.Join(params[0:titleEnd], " ")
 	}
 
 	err = service.UpdateTaskService(m.Author.ID, IndexNumber, newTitle, newPriority)
