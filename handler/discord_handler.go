@@ -57,7 +57,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		HandleConfirm(s, m)
 	case strings.HasPrefix(content, "!edit "):
 		HandleEdit(s, m, content)
-	case strings.HasPrefix(content, "*help"):
+	case strings.HasPrefix(content, "!help"):
 		HandleHelp(s, m)
 	}
 }
