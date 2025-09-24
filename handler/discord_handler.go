@@ -38,7 +38,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	content := strings.TrimSpace(m.Content)
+	content := strings.TrimSpace(m.ContentWithMentionsReplaced())
 
 	switch {
 	case strings.HasPrefix(content, "!add "):
