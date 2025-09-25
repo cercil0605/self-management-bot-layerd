@@ -42,10 +42,11 @@ func FindTaskByUserID(userID string, when string) ([]Task, error) {
 	// 日付に応じてSQL文を変えて絞り込む
 	var dateCondition string
 	if when == "today" {
-		dateCondition = "AND created_at::date = CURRENT_DATE"
+		// 未完了タスクは日付問わず表示する
+		dateCondition = "AND (status = 'pending' OR (status = 'completed' AND created_at::date = CURRENT_DATE))"
 	} else if when == "yesterday" {
 		dateCondition = "AND created_at >= CURRENT_DATE - INTERVAL '1 day' AND created_at < CURRENT_DATE"
-	} else { // すべてのデータ
+	} else {
 		dateCondition = ""
 	}
 	query := fmt.Sprintf(baseQuery, dateCondition)
