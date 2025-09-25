@@ -11,6 +11,10 @@
 
 - Discord
 
+## 🪔 使い方
+
+[ここからサーバーに入れてください！](https://discord.com/oauth2/authorize?client_id=1365664752940089416&permissions=274878236672&integration_type=0&scope=bot)
+
 ---
 
 ## 🚀 コマンド一覧
