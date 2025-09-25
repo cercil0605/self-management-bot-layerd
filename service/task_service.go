@@ -67,7 +67,7 @@ func DeleteTaskService(userID string, DeleteTaskNumber int) error {
 
 // ChatWithContext 今日のタスク状況について
 func ChatWithContext(userID, input string) (string, error) {
-	pending, err := repository.FindPendingTodayTaskByUser(userID)
+	pending, err := repository.FindPendingTaskByUser(userID)
 	if err != nil {
 		return "❌ ユーザーのタスク取得に失敗しました(Pending)", err
 	}

@@ -95,10 +95,10 @@ func FindCompletedTodayTaskByUser(userID string) ([]Task, error) {
 	return tasks, err
 }
 
-// FindPendingTodayTaskByUser 今日の待ちタスク
-func FindPendingTodayTaskByUser(userID string) ([]Task, error) {
+// FindPendingTaskByUser 待ちタスク
+func FindPendingTaskByUser(userID string) ([]Task, error) {
 	query := `SELECT id,title,status FROM tasks 
-                       WHERE user_id = $1 AND status = 'pending' AND created_at::date = CURRENT_DATE
+                       WHERE user_id = $1 AND status = 'pending'
                        ORDER BY created_at `
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
