@@ -33,7 +33,8 @@ func main() {
 	defer dg.Close()
 	// パッチ処理
 	handler.StartResetConfirmCleaner()
-	handler.StartFixedReminderSender(dg)
+	// リマインダを無効化
+	//handler.StartFixedReminderSender(dg)
 
 	log.Println("✅ Bot is now running... ")
 	select {}

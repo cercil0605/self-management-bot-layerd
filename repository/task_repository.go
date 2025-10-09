@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"self-management-bot/db"
+	"self-management-bot/lib/errors"
 )
 
 type Task struct {
@@ -20,12 +21,12 @@ type Priority struct {
 }
 
 func AddTask(userID, title string, priorityID int) error {
-	query := `INSERT INTO tasks (user_id, title, priority_id,status) VALUES ($1, $2, $3,'pending')`
+	query := `INSERT INTO tasks (user_id, title, priority_id, status) VALUES ($1, $2, $3, 'pending')`
 	_, err := db.DB.Exec(query, userID, title, priorityID)
 	if err != nil {
-		fmt.Println("❌ AddTask error:", err)
+		return errors.NewAppError("AddTask", err)
 	}
-	return err
+	return nil
 }
 
 // FindTaskByUserID 完了状況問わずタスクを出力
@@ -53,7 +54,10 @@ func FindTaskByUserID(userID string, when string) ([]Task, error) {
 
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
-	return tasks, err
+	if err != nil {
+		return nil, errors.NewAppError("FindTaskByUserID", err)
+	}
+	return tasks, nil
 }
 func UpdateTask(taskID int, title string, priorityID *int) error {
 	var query string
@@ -72,37 +76,52 @@ func UpdateTask(taskID int, title string, priorityID *int) error {
 		}
 	}
 	_, err := db.DB.Exec(query, args...)
-	return err
+	if err != nil {
+		errors.NewAppError("UpdateTask", err)
+	}
+	return nil
 }
 func CompleteTask(taskID int) error {
 	query := `UPDATE tasks SET status = 'completed' WHERE id = $1`
 	_, err := db.DB.Exec(query, taskID)
-	return err
+	if err != nil {
+		return errors.NewAppError("CompleteTask", err)
+	}
+	return nil
 }
 func DeleteTask(taskID int) error {
 	query := `DELETE FROM tasks WHERE id = $1`
 	_, err := db.DB.Exec(query, taskID)
-	return err
+	if err != nil {
+		return errors.NewAppError("DeleteTask", err)
+	}
+	return nil
 }
 
 // FindCompletedTodayTaskByUser 今日の完了済みタスク
 func FindCompletedTodayTaskByUser(userID string) ([]Task, error) {
-	query := `SELECT id,title,status FROM tasks 
-                       WHERE user_id = $1 AND status = 'completed' AND created_at::date = CURRENT_DATE
-                       ORDER BY created_at `
+	query := `SELECT id, title, status FROM tasks 
+			  WHERE user_id = $1 AND status = 'completed' AND created_at::date = CURRENT_DATE
+			  ORDER BY created_at`
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
-	return tasks, err
+	if err != nil {
+		return nil, errors.NewAppError("FindCompletedTodayTaskByUser", err)
+	}
+	return tasks, nil
 }
 
 // FindPendingTaskByUser 待ちタスク
 func FindPendingTaskByUser(userID string) ([]Task, error) {
-	query := `SELECT id,title,status FROM tasks 
-                       WHERE user_id = $1 AND status = 'pending'
-                       ORDER BY created_at `
+	query := `SELECT id, title, status FROM tasks 
+			  WHERE user_id = $1 AND status = 'pending'
+			  ORDER BY created_at`
 	var tasks []Task
 	err := db.DB.Select(&tasks, query, userID)
-	return tasks, err
+	if err != nil {
+		return nil, errors.NewAppError("FindPendingTaskByUser", err)
+	}
+	return tasks, nil
 }
 
 // FindAllUser ユーザIDを全て探す
@@ -110,7 +129,10 @@ func FindAllUser() ([]string, error) {
 	query := `SELECT DISTINCT user_id FROM tasks`
 	var userIDs []string
 	err := db.DB.Select(&userIDs, query)
-	return userIDs, err
+	if err != nil {
+		return nil, errors.NewAppError("FindAllUser", err)
+	}
+	return userIDs, nil
 }
 
 func DeleteTodayTasks(userID string) (int, error) {
@@ -120,9 +142,12 @@ func DeleteTodayTasks(userID string) (int, error) {
 	`
 	res, err := db.DB.Exec(query, userID)
 	if err != nil {
-		return 0, err
+		return 0, errors.NewAppError("DeleteTodayTasks", err)
 	}
-	rows, _ := res.RowsAffected()
+	rows, rerr := res.RowsAffected()
+	if rerr != nil {
+		return 0, errors.NewAppError("DeleteTodayTasks", rerr)
+	}
 	return int(rows), nil
 }
 
@@ -130,8 +155,11 @@ func DeleteAllTasksByUser(userID string) (int, error) {
 	query := `DELETE FROM tasks WHERE user_id = $1`
 	res, err := db.DB.Exec(query, userID)
 	if err != nil {
-		return 0, err
+		return 0, errors.NewAppError("DeleteAllTasksByUser", err)
 	}
-	rows, _ := res.RowsAffected()
+	rows, rerr := res.RowsAffected()
+	if rerr != nil {
+		return 0, errors.NewAppError("DeleteAllTasksByUser", rerr)
+	}
 	return int(rows), nil
 }

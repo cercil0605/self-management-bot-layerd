@@ -4,81 +4,107 @@ package service
 import (
 	"fmt"
 	"self-management-bot/client"
+	"self-management-bot/lib/errors"
 	"self-management-bot/repository"
 	"strings"
 )
 
 func AddTaskService(userID, title string, priorityID int) error {
-	return repository.AddTask(userID, title, priorityID)
+	err := repository.AddTask(userID, title, priorityID)
+	if err != nil {
+		return errors.NewAppError("AddTaskService", err)
+	}
+	return nil
 }
 
 // GetTaskService 今日のタスクを取得
 func GetTaskService(userID string) ([]repository.Task, error) {
-	return repository.FindTaskByUserID(userID, "today")
+	tasks, err := repository.FindTaskByUserID(userID, "today")
+	if err != nil {
+		return nil, errors.NewAppError("GetTaskService", err)
+	}
+	return tasks, nil
 }
+
 func GetYesterdayTaskService(userID string) ([]repository.Task, error) {
-	return repository.FindTaskByUserID(userID, "yesterday")
+	tasks, err := repository.FindTaskByUserID(userID, "yesterday")
+	if err != nil {
+		return nil, errors.NewAppError("GetYesterdayTaskService", err)
+	}
+	return tasks, nil
 }
+
 func UpdateTaskService(userID string, TaskNumber int, title string, priorityID *int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
 	if err != nil {
-		return fmt.Errorf("タスク取得に失敗: %w", err)
+		return errors.NewAppError("UpdateTaskService", err)
 	}
 	if len(tasks) == 0 {
-		return fmt.Errorf("タスクが1件も登録されていません")
+		return errors.NewAppError("UpdateTaskService", fmt.Errorf("タスクが1件も登録されていません"))
 	}
 	if TaskNumber < 0 || TaskNumber >= len(tasks) {
-		return fmt.Errorf("指定されたタスク番号は存在しません")
+		return errors.NewAppError("UpdateTaskService", fmt.Errorf("指定されたタスク番号は存在しません"))
 	}
-	return repository.UpdateTask(tasks[TaskNumber].ID, title, priorityID)
+	err = repository.UpdateTask(tasks[TaskNumber].ID, title, priorityID)
+	if err != nil {
+		return errors.NewAppError("UpdateTaskService", err)
+	}
+	return nil
 }
+
 func CompleteTaskService(userID string, DoneTaskNumber int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
 	if err != nil {
-		return fmt.Errorf("タスク取得に失敗: %w", err)
+		return errors.NewAppError("CompleteTaskService", fmt.Errorf("タスク取得に失敗: %w", err))
 	}
 	if len(tasks) == 0 {
-		return fmt.Errorf("タスクが1件も登録されていません")
+		return errors.NewAppError("CompleteTaskService", fmt.Errorf("タスクが1件も登録されていません"))
 	}
 	// タスク存在
 	if DoneTaskNumber < 0 || DoneTaskNumber >= len(tasks) {
-		return fmt.Errorf("指定されたタスク番号は存在しません")
+		return errors.NewAppError("CompleteTaskService", fmt.Errorf("指定されたタスク番号は存在しません"))
 	}
-	return repository.CompleteTask(tasks[DoneTaskNumber].ID)
+	if err := repository.CompleteTask(tasks[DoneTaskNumber].ID); err != nil {
+		return errors.NewAppError("CompleteTaskService", err)
+	}
+	return nil
 }
 
 func DeleteTaskService(userID string, DeleteTaskNumber int) error {
 	tasks, err := GetTaskService(userID)
 	// 内部エラー
 	if err != nil {
-		return fmt.Errorf("タスク取得に失敗: %w", err)
+		return errors.NewAppError("DeleteTaskService", fmt.Errorf("タスク取得に失敗: %w", err))
 	}
 	if len(tasks) == 0 {
-		return fmt.Errorf("タスクが1件も登録されていません")
+		return errors.NewAppError("DeleteTaskService", fmt.Errorf("タスクが1件も登録されていません"))
 	}
 	// タスク存在
 	if DeleteTaskNumber < 0 || DeleteTaskNumber >= len(tasks) {
-		return fmt.Errorf("指定されたタスク番号は存在しません")
+		return errors.NewAppError("DeleteTaskService", fmt.Errorf("指定されたタスク番号は存在しません"))
 	}
-	return repository.DeleteTask(tasks[DeleteTaskNumber].ID)
+	if err := repository.DeleteTask(tasks[DeleteTaskNumber].ID); err != nil {
+		return errors.NewAppError("DeleteTaskService", err)
+	}
+	return nil
 }
 
 // ChatWithContext 今日のタスク状況について
 func ChatWithContext(userID, input string) (string, error) {
 	pending, err := repository.FindPendingTaskByUser(userID)
 	if err != nil {
-		return "❌ ユーザーのタスク取得に失敗しました(Pending)", err
+		return "❌ ユーザーのタスク取得に失敗しました(Pending)", errors.NewAppError("ChatWithContext", err)
 	}
 	completed, err := repository.FindCompletedTodayTaskByUser(userID)
 	if err != nil {
-		return "❌ ユーザーのタスク取得に失敗しました(Completed)", err
+		return "❌ ユーザーのタスク取得に失敗しました(Completed)", errors.NewAppError("ChatWithContext", err)
 	}
 	prompt := CreateChatPrompt(pending, completed, input)
 	res, err := client.GetGeminiResponse(prompt)
 	if err != nil {
-		return "❌ 応答に失敗しました(LLM)", err
+		return "❌ 応答に失敗しました(LLM)", errors.NewAppError("ChatWithContext", err)
 	}
 	return res, nil
 }
@@ -109,10 +135,18 @@ func CreateChatPrompt(pending []repository.Task, completed []repository.Task, in
 	return prompt.String()
 }
 func ResetTodayTasks(userID string) (int, error) {
-	return repository.DeleteTodayTasks(userID)
+	n, err := repository.DeleteTodayTasks(userID)
+	if err != nil {
+		return 0, errors.NewAppError("ResetTodayTasks", err)
+	}
+	return n, nil
 }
 func ResetAllTasks(userID string) (int, error) {
-	return repository.DeleteAllTasksByUser(userID)
+	n, err := repository.DeleteAllTasksByUser(userID)
+	if err != nil {
+		return 0, errors.NewAppError("ResetAllTasks", err)
+	}
+	return n, nil
 }
 
 type ReminderMessage struct {
@@ -125,13 +159,13 @@ func FixedTimeReminder() ([]ReminderMessage, error) {
 	userInfo, err := repository.FindAllUser()
 	if err != nil {
 		fmt.Println("❌ ユーザ情報取得失敗:", err)
-		return nil, err
+		return nil, errors.NewAppError("FixedTimeReminder", err)
 	}
 	// TODO 登録したすべてのユーザに送信するようにする
 	tasks, err := GetYesterdayTaskService(userInfo[0])
 	if err != nil {
 		fmt.Printf("❌ タスク取得失敗 userID=%s: %v\n", userInfo[0], err)
-		return nil, err
+		return nil, errors.NewAppError("FixedTimeReminder", err)
 	}
 	var prompt strings.Builder
 	// プロンプト
@@ -175,7 +209,7 @@ func FixedTimeReminder() ([]ReminderMessage, error) {
 	res, err := client.GetGeminiResponse(prompt.String())
 	if err != nil {
 		fmt.Printf("❌ LLM応答失敗 userID=%s: %v\n", userInfo[0], err)
-		return nil, err
+		return nil, errors.NewAppError("FixedTimeReminder", err)
 	}
 
 	fmt.Println("✅ リマインド生成成功")
