@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"log"
-	"self-management-bot/internal/errors"
+	"self-management-bot/lib/errors"
 	"self-management-bot/service"
 	"strconv"
 	"strings"
@@ -53,39 +53,39 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	content := strings.TrimSpace(m.ContentWithMentionsReplaced())
 
 	switch {
-	case strings.HasPrefix(content, fmt.Sprintf("%sadd ", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!add ", COMMAND_PREFIX)):
 		if err := HandleAdd(s, m, content); err != nil {
 			return errors.NewAppError("HandleAdd", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%slist", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!list", COMMAND_PREFIX)):
 		if err := HandleList(s, m); err != nil {
 			return errors.NewAppError("HandleList", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%sdone ", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!done ", COMMAND_PREFIX)):
 		if err := HandleComplete(s, m, content); err != nil {
 			return errors.NewAppError("HandleComplete", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%sdelete", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!delete", COMMAND_PREFIX)):
 		if err := HandleDelete(s, m, content); err != nil {
 			return errors.NewAppError("HandleDelete", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%schat ", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!chat ", COMMAND_PREFIX)):
 		if err := HandleChat(s, m, content); err != nil {
 			return errors.NewAppError("HandleChat", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%sreset", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!reset", COMMAND_PREFIX)):
 		if err := HandleReset(s, m); err != nil {
 			return errors.NewAppError("HandleReset", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%sconfirm reset", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!confirm reset", COMMAND_PREFIX)):
 		if err := HandleConfirm(s, m); err != nil {
 			return errors.NewAppError("HandleConfirm", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%sedit ", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!edit ", COMMAND_PREFIX)):
 		if err := HandleEdit(s, m, content); err != nil {
 			return errors.NewAppError("HandleEdit", err)
 		}
-	case strings.HasPrefix(content, fmt.Sprintf("%shelp", COMMAND_PREFIX)):
+	case strings.HasPrefix(content, fmt.Sprintf("!help", COMMAND_PREFIX)):
 		if err := HandleHelp(s, m); err != nil {
 			return errors.NewAppError("HandleHelp", err)
 		}
@@ -113,8 +113,8 @@ func HandleAdd(s *discordgo.Session, m *discordgo.MessageCreate, content string)
 
 	if err := service.AddTaskService(m.Author.ID, title, priorityID); err != nil {
 		// ユーザーへの通知が失敗した場合も別名で返す
-		if rerr := replyToUser(s, m.ChannelID, m.Author.ID, "```❌ タスク登録失敗```"); rerr != nil {
-			return errors.NewAppError("failedToAddTask", rerr)
+		if err := replyToUser(s, m.ChannelID, m.Author.ID, "```❌ タスク登録失敗```"); err != nil {
+			return errors.NewAppError("failedToAddTask", err)
 		}
 		return err
 	}
