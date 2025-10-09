@@ -4,7 +4,7 @@ package service
 import (
 	"fmt"
 	"self-management-bot/client"
-	"self-management-bot/internal/errors"
+	"self-management-bot/lib/errors"
 	"self-management-bot/repository"
 	"strings"
 )

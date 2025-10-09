@@ -3,7 +3,7 @@ package repository
 import (
 	"fmt"
 	"self-management-bot/db"
-	"self-management-bot/internal/errors"
+	"self-management-bot/lib/errors"
 )
 
 type Task struct {
